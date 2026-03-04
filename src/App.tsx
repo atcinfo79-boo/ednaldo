@@ -25,7 +25,7 @@ import {
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cn } from './lib/utils';
-import { getChatResponse } from './services/geminiService';
+import { getChatResponse, getConversationSummary } from './services/geminiService';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -84,6 +84,29 @@ export default function App() {
     const response = await getChatResponse(userMessage, history);
     setMessages(prev => [...prev, { role: 'model', text: response }]);
     setIsTyping(false);
+
+    // Check if we should show the WhatsApp button
+    const lowerResponse = response.toLowerCase();
+    const lowerInput = userMessage.toLowerCase();
+    const needsBudget = lowerResponse.includes('whatsapp') || 
+                        lowerResponse.includes('orçamento') || 
+                        lowerResponse.includes('estoque') ||
+                        lowerResponse.includes('comprar') ||
+                        lowerResponse.includes('ednaldo tem') ||
+                        lowerInput.includes('preço') ||
+                        lowerInput.includes('quanto custa') ||
+                        lowerInput.includes('tem aí');
+
+    if (needsBudget) {
+      const summary = await getConversationSummary([...history, { role: 'model', parts: [{ text: response }] }]);
+      const waMessage = `Tenho interesse em: "${summary}"`;
+      const waUrl = `https://wa.me/5521998187716?text=${encodeURIComponent(waMessage)}`;
+      
+      setMessages(prev => [...prev, { 
+        role: 'model', 
+        text: `\n\n[Clique aqui para chamar no WhatsApp](${waUrl})` 
+      }]);
+    }
   };
 
   const addBudgetItem = (e?: React.FormEvent) => {
@@ -823,13 +846,28 @@ export default function App() {
               <div 
                 key={i} 
                 className={cn(
-                  "rounded-2xl p-4 text-sm max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300",
+                  "rounded-2xl p-4 text-sm max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300 whitespace-pre-wrap",
                   msg.role === 'user' 
                     ? "bg-brand-accent text-white self-end rounded-tr-none" 
                     : "bg-white/5 text-white/80 self-start rounded-tl-none"
                 )}
               >
-                {msg.text}
+                {msg.text.includes('https://wa.me/') ? (
+                  <div>
+                    {msg.text.split('\n\n')[0] && <p className="mb-3">{msg.text.split('\n\n')[0]}</p>}
+                    <a 
+                      href={msg.text.match(/https:\/\/wa\.me\/[^\)]+/)?.[0]} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white py-2 px-4 rounded-xl font-bold transition-all text-xs w-full no-underline"
+                    >
+                      <MessageSquare size={16} />
+                      Chamar no WhatsApp
+                    </a>
+                  </div>
+                ) : (
+                  msg.text
+                )}
               </div>
             ))}
             {isTyping && (
@@ -839,8 +877,23 @@ export default function App() {
             )}
             <div ref={chatEndRef} />
           </div>
-          <form onSubmit={handleSendMessage} className="p-4 border-t border-white/5 bg-brand-card">
-            <div className="relative">
+          <div className="p-4 border-t border-white/5 bg-brand-card flex flex-col gap-3">
+            <button 
+              onClick={async () => {
+                const history = messages.map(m => ({
+                  role: m.role,
+                  parts: [{ text: m.text }]
+                }));
+                const summary = await getConversationSummary(history);
+                const waMessage = `Tenho interesse em: "${summary}"`;
+                window.open(`https://wa.me/5521998187716?text=${encodeURIComponent(waMessage)}`, '_blank');
+              }}
+              className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white py-2.5 rounded-xl font-bold transition-all text-xs w-full"
+            >
+              <MessageSquare size={16} />
+              Enviar Interesse para WhatsApp
+            </button>
+            <form onSubmit={handleSendMessage} className="relative">
               <input 
                 type="text" 
                 value={inputValue}
@@ -856,8 +909,8 @@ export default function App() {
               >
                 <ArrowRight size={20} />
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
     </div>
