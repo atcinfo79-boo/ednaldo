@@ -44,7 +44,34 @@ Regras de comportamento:
     return result.text.replace(/\*/g, '');
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Desculpe, tive um problema técnico. Pode repetir ou nos chamar no WhatsApp? (21) 99818-7716";
+    return "Desculpe, tive um problema técnico. Mas você pode falar diretamente com nossos vendedores no WhatsApp (21) 99818-7716!";
+  }
+}
+
+export async function scanListWithAI(base64Data: string) {
+  const model = "gemini-3-flash-preview";
+  const prompt = "Aja como um especialista em materiais de construção. Identifique todos os produtos e quantidades nesta imagem de lista de materiais. Retorne APENAS um array JSON de strings, exemplo: [\"10 sacos de cimento\", \"5 latas de tinta\"]. Não inclua explicações, apenas o JSON puro.";
+
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: [{
+        parts: [
+          { text: prompt },
+          { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+        ]
+      }],
+    });
+
+    const text = response.text;
+    const jsonMatch = text?.match(/\[.*\]/s);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]) as string[];
+    }
+    return [];
+  } catch (error) {
+    console.error("AI Scan Error:", error);
+    return [];
   }
 }
 

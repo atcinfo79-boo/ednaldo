@@ -20,12 +20,13 @@ import {
   Plus,
   Trash2,
   Send,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Camera
 } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cn } from './lib/utils';
-import { getChatResponse, getConversationSummary } from './services/geminiService';
+import { getChatResponse, getConversationSummary, scanListWithAI } from './services/geminiService';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -57,7 +58,42 @@ export default function App() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const toBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    try {
+      const base64 = await toBase64(file);
+      const items = await scanListWithAI(base64);
+      
+      if (items && items.length > 0) {
+        setBudgetItems(prev => [...prev, ...items]);
+        alert(`${items.length} itens identificados e adicionados à lista!`);
+      } else {
+        alert('Não conseguimos identificar itens na imagem. Tente uma foto mais nítida.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao processar imagem. Tente novamente.');
+    } finally {
+      setIsScanning(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -198,6 +234,24 @@ export default function App() {
     setIsSimulating(true);
     setTimeout(() => setIsSimulating(false), 3000);
   };
+
+  const today = new Date();
+  const isMarch2026 = today.getMonth() === 2 && today.getFullYear() === 2026;
+  const daysInMarch = 31;
+  const marchStartDay = 0; // March 1st 2026 is Sunday (0)
+
+  const getDayName = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', { weekday: 'long' });
+  };
+
+  const getMonthName = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', { month: 'long' });
+  };
+
+  const formattedDate = `${getDayName(today).charAt(0).toUpperCase() + getDayName(today).slice(1)}, ${today.getDate().toString().padStart(2, '0')} de ${getMonthName(today).charAt(0).toUpperCase() + getMonthName(today).slice(1)}`;
+
+  const isSunday = today.getDay() === 0;
+  const statusText = isSunday ? 'Domingos: Fechado' : `Hoje: Aberto até 18:30`;
 
   return (
     <div className="min-h-screen selection:bg-brand-accent selection:text-white">
@@ -455,11 +509,11 @@ export default function App() {
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-4 glass p-4 rounded-2xl">
                   <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <div className={cn("w-2 h-2 bg-emerald-500 rounded-full", !isSunday && "animate-pulse")}></div>
                   </div>
                   <div>
-                    <p className="text-sm font-bold">Hoje: Aberto até 18:30</p>
-                    <p className="text-xs text-white/40 uppercase tracking-widest">Segunda-feira, 02 de Março</p>
+                    <p className="text-sm font-bold">{statusText}</p>
+                    <p className="text-xs text-white/40 uppercase tracking-widest">{formattedDate}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 glass p-4 rounded-2xl border-red-500/20">
@@ -491,22 +545,23 @@ export default function App() {
 
               <div className="grid grid-cols-7 gap-2">
                 {/* March 2026 starts on Sunday (1st) */}
-                {Array.from({ length: 31 }).map((_, i) => {
+                {Array.from({ length: daysInMarch }).map((_, i) => {
                   const day = i + 1;
-                  const isSunday = (day - 1) % 7 === 0;
-                  const isToday = day === 2;
+                  const dayOfWeek = (day - 1 + marchStartDay) % 7;
+                  const isSun = dayOfWeek === 0;
+                  const isToday = isMarch2026 && day === today.getDate();
                   
                   return (
                     <div 
                       key={i} 
                       className={cn(
                         "aspect-square flex items-center justify-center rounded-xl text-sm font-bold transition-all relative group",
-                        isSunday ? "bg-red-500/10 text-red-500 cursor-not-allowed" : "bg-white/5 text-white/60",
+                        isSun ? "bg-red-500/10 text-red-500 cursor-not-allowed" : "bg-white/5 text-white/60",
                         isToday && "bg-brand-accent text-white shadow-[0_0_20px_rgba(242,125,38,0.4)] scale-110 z-10"
                       )}
                     >
                       {day}
-                      {isSunday && (
+                      {isSun && (
                         <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <div className="bg-red-500 text-[8px] text-white px-1 rounded-sm uppercase">Off</div>
                         </div>
@@ -774,7 +829,33 @@ export default function App() {
             </button>
           </div>
           
-          <div className="h-80 p-6 overflow-y-auto flex flex-col gap-3 bg-brand-card/80">
+          {/* Scanner Pro Obra Section */}
+          <div className="p-4 bg-blue-500/10 border-b border-white/5">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isScanning}
+              className="w-full bg-brand-accent hover:bg-brand-accent/90 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(242,125,38,0.3)] disabled:opacity-50"
+            >
+              {isScanning ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Camera className="w-5 h-5" />
+              )}
+              {isScanning ? 'Analisando...' : 'Scanner Pro Obra 🚀'}
+            </button>
+            <p className="text-[10px] text-white/40 mt-2 text-center uppercase tracking-widest font-bold">
+              Não precisa digitar, só enviar a foto da lista de obras! 📸
+            </p>
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              onChange={handleScan}
+              accept="image/*" 
+              className="hidden" 
+            />
+          </div>
+
+          <div className="h-64 p-6 overflow-y-auto flex flex-col gap-3 bg-brand-card/80">
             {budgetItems.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
                 <ClipboardList size={48} className="mb-4" />

@@ -1,5 +1,5 @@
 {
-  "name": "Ednaldo materiais de construção - Materiais de Construção Premium",
-  "description": "Landing page de luxo para venda de materiais de construção com simulador de entrega e chat inteligente.",
+  "name": "Especialista Ednaldo - Chat Inteligente com Google Search",
+  "description": "Chat inteligente para materiais de construção com integração em tempo real via Google Search Grounding para especificações técnicas e tendências.",
   "requestFramePermissions": ["geolocation"]
 }
