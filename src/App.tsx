@@ -605,7 +605,7 @@ export default function App() {
               <div>
                 <h3 className="text-xl font-bold mb-2">Melhor do Bairro</h3>
                 <p className="text-white/50 text-xs leading-relaxed">
-                  Eleita a melhor loja do Andaraí e proximidades pelo atendimento e agilidade.
+                  Eleita a melhor loja do Andaraí pelo atendimento e agilidade.
                 </p>
               </div>
             </div>
@@ -805,7 +805,7 @@ export default function App() {
                   <h4 className="font-bold uppercase tracking-widest text-sm">Obras de Referência</h4>
                 </div>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Orgulhamo-nos de ter fornecido materiais para grandes projetos locais, como as obras do <span className="text-white font-bold">Hospital de Referência Andaraí e proximidades</span>, diversas <span className="text-white font-bold">creches, colégios e igrejas</span> nos arredores. Nossa qualidade está presente em cada canto do bairro.
+                  Orgulhamo-nos de ter fornecido materiais para grandes projetos locais, como as obras do <span className="text-white font-bold">Hospital de Referência Andaraí</span>, diversas <span className="text-white font-bold">creches, colégios e igrejas</span> nos arredores. Nossa qualidade está presente em cada canto do bairro.
                 </p>
               </div>
 
@@ -913,7 +913,7 @@ export default function App() {
               </span>
             </div>
             <p className="text-white/40 max-w-sm mb-8">
-              Sua parceira de confiança no Andaraí e proximidades. Do básico ao acabamento, oferecemos o melhor para sua obra.
+              Sua parceira de confiança no Andaraí. Do básico ao acabamento, oferecemos o melhor para sua obra.
             </p>
             <div className="flex gap-4">
               <div className="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-brand-accent transition-colors cursor-pointer">
@@ -933,7 +933,7 @@ export default function App() {
             <ul className="flex flex-col gap-4 text-white/40 text-sm">
               <li className="flex gap-3">
                 <MapPin className="text-brand-accent shrink-0" size={18} />
-                R. Leopoldo, 106 - Andaraí e proximidades, Rio de Janeiro - RJ, 20541-170
+                R. Leopoldo, 106 - Andaraí, Rio de Janeiro - RJ, 20541-170
               </li>
               <li className="flex gap-3">
                 <Clock className="text-brand-accent shrink-0" size={18} />
