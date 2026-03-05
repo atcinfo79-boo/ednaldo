@@ -795,19 +795,9 @@ export default function App() {
                 DO <span className="text-brand-accent italic">BÁSICO</span> AO <br />
                 <span className="text-brand-accent italic">ACABAMENTO</span>
               </h2>
-              <p className="text-white/60 text-lg mb-8 leading-relaxed">
+              <p className="text-white/60 text-lg mb-12 leading-relaxed">
                 Somos uma empresa familiar que entende a importância do seu sonho. Na Ednaldo materiais de construção, você não é apenas um cliente, é um parceiro. Oferecemos consultoria técnica gratuita para garantir que você leve exatamente o que sua obra precisa.
               </p>
-              
-              <div className="mb-12 p-6 glass rounded-2xl border-brand-accent/20">
-                <div className="flex items-center gap-3 mb-4">
-                  <HardHat className="text-brand-accent" />
-                  <h4 className="font-bold uppercase tracking-widest text-sm">Obras de Referência</h4>
-                </div>
-                <p className="text-sm text-white/70 leading-relaxed">
-                  Orgulhamo-nos de ter fornecido materiais para grandes projetos locais, como as obras do <span className="text-white font-bold">Hospital de Referência Andaraí</span>, diversas <span className="text-white font-bold">creches, colégios e igrejas</span> nos arredores. Nossa qualidade está presente em cada canto do bairro.
-                </p>
-              </div>
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="flex flex-col gap-3">
