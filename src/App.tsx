@@ -540,7 +540,7 @@ export default function App() {
                          Distância: <span className="font-bold">{simulationResult.distance.toFixed(1)} km</span>
                        </div>
                        <div className="mt-2 pt-2 border-t border-white/10 text-[9px] text-white/40 leading-tight">
-                         Qualquer porte atendido • Entrega 24h
+                         Qualquer porte atendido • Entrega Express 72h*
                        </div>
                        <button 
                         onClick={() => setSimulationResult(null)}
@@ -605,24 +605,29 @@ export default function App() {
               <div>
                 <h3 className="text-xl font-bold mb-2">Melhor do Bairro</h3>
                 <p className="text-white/50 text-xs leading-relaxed">
-                  Eleita a melhor loja do Andaraí pelo atendimento e agilidade.
+                  Eleita a melhor loja do Andaraí e proximidades pelo atendimento e agilidade.
                 </p>
               </div>
             </div>
 
-            {/* Fast Delivery Card */}
+            {/* Express Delivery Card */}
             <div className="bento-item col-span-1 md:col-span-2 row-span-1 glass rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden">
               <div className="relative z-10">
                 <div className="w-12 h-12 bg-brand-accent/20 rounded-2xl flex items-center justify-center mb-6">
                   <Clock className="text-brand-accent" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Entrega em 24h</h3>
-                <p className="text-white/50 text-sm max-w-xs">
-                  Para itens em estoque, garantimos a entrega no dia seguinte. Sua obra não para.
-                </p>
+                <h3 className="text-2xl font-bold mb-4">Entrega</h3>
+                <div className="flex flex-col gap-2">
+                  <p className="text-white/50 text-sm max-w-xs">
+                    Garantimos a entrega em no <span className="text-brand-accent font-bold">máximo 72h</span> para que sua obra não pare.
+                  </p>
+                  <p className="text-[10px] text-white/30 italic leading-tight">
+                    *Na falta de materiais o tempo poderá sofrer reajuste conforme disponibilidade do fornecedor.
+                  </p>
+                </div>
               </div>
               <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] font-black italic">24H</div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[6rem] md:text-[8rem] font-black italic">EXPRESS</div>
               </div>
             </div>
           </div>
@@ -795,9 +800,19 @@ export default function App() {
                 DO <span className="text-brand-accent italic">BÁSICO</span> AO <br />
                 <span className="text-brand-accent italic">ACABAMENTO</span>
               </h2>
-              <p className="text-white/60 text-lg mb-12 leading-relaxed">
+              <p className="text-white/60 text-lg mb-8 leading-relaxed">
                 Somos uma empresa familiar que entende a importância do seu sonho. Na Ednaldo materiais de construção, você não é apenas um cliente, é um parceiro. Oferecemos consultoria técnica gratuita para garantir que você leve exatamente o que sua obra precisa.
               </p>
+              
+              <div className="mb-12 p-6 glass rounded-2xl border-brand-accent/20">
+                <div className="flex items-center gap-3 mb-4">
+                  <HardHat className="text-brand-accent" />
+                  <h4 className="font-bold uppercase tracking-widest text-sm">Obras de Referência</h4>
+                </div>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  Orgulhamo-nos de ter fornecido materiais para grandes projetos locais, como as obras do <span className="text-white font-bold">Hospital de Referência Andaraí e proximidades</span>, diversas <span className="text-white font-bold">creches, colégios e igrejas</span> nos arredores. Nossa qualidade está presente em cada canto do bairro.
+                </p>
+              </div>
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="flex flex-col gap-3">
@@ -903,7 +918,7 @@ export default function App() {
               </span>
             </div>
             <p className="text-white/40 max-w-sm mb-8">
-              Sua parceira de confiança no Andaraí. Do básico ao acabamento, oferecemos o melhor para sua obra.
+              Sua parceira de confiança no Andaraí e proximidades. Do básico ao acabamento, oferecemos o melhor para sua obra.
             </p>
             <div className="flex gap-4">
               <div className="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-brand-accent transition-colors cursor-pointer">
@@ -923,7 +938,7 @@ export default function App() {
             <ul className="flex flex-col gap-4 text-white/40 text-sm">
               <li className="flex gap-3">
                 <MapPin className="text-brand-accent shrink-0" size={18} />
-                R. Leopoldo, 106 - Andaraí, Rio de Janeiro - RJ, 20541-170
+                R. Leopoldo, 106 - Andaraí e proximidades, Rio de Janeiro - RJ, 20541-170
               </li>
               <li className="flex gap-3">
                 <Clock className="text-brand-accent shrink-0" size={18} />
