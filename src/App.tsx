@@ -20,13 +20,12 @@ import {
   Plus,
   Trash2,
   Send,
-  Camera,
   Calendar as CalendarIcon
 } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cn } from './lib/utils';
-import { analyzeImage } from './services/geminiService';
+import { getChatResponse, getConversationSummary } from './services/geminiService';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -47,12 +46,68 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [cep, setCep] = useState('');
   const [isSimulating, setIsSimulating] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [budgetChatOpen, setBudgetChatOpen] = useState(false);
   const [budgetItems, setBudgetItems] = useState<string[]>([]);
   const [budgetItemInput, setBudgetItemInput] = useState('');
   
-  const [isScanning, setIsScanning] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([
+    { role: 'model', text: 'Olá! Sou o assistente virtual da Ednaldo. Como posso ajudar na sua obra hoje?' },
+    { role: 'model', text: 'Posso tirar dúvidas sobre misturas de areia, colas para azulejos grandes ou prazos de entrega.' }
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!inputValue.trim() || isTyping) return;
+
+    const userMessage = inputValue.trim();
+    setInputValue('');
+    setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+    setIsTyping(true);
+
+    const history = messages.map(m => ({
+      role: m.role,
+      parts: [{ text: m.text }]
+    }));
+
+    const response = await getChatResponse(userMessage, history);
+    setMessages(prev => [...prev, { role: 'model', text: response }]);
+    setIsTyping(false);
+
+    // Check if we should show the WhatsApp button
+    const lowerResponse = response.toLowerCase();
+    const lowerInput = userMessage.toLowerCase();
+    const needsBudget = lowerResponse.includes('whatsapp') || 
+                        lowerResponse.includes('orçamento') || 
+                        lowerResponse.includes('estoque') ||
+                        lowerResponse.includes('comprar') ||
+                        lowerResponse.includes('ednaldo tem') ||
+                        lowerInput.includes('preço') ||
+                        lowerInput.includes('quanto custa') ||
+                        lowerInput.includes('tem aí');
+
+    if (needsBudget) {
+      const summary = await getConversationSummary([...history, { role: 'model', parts: [{ text: response }] }]);
+      const waMessage = `Tenho interesse em: "${summary}"`;
+      const waUrl = `https://wa.me/5521998187716?text=${encodeURIComponent(waMessage)}`;
+      
+      setMessages(prev => [...prev, { 
+        role: 'model', 
+        text: `\n\n[Clique aqui para chamar no WhatsApp](${waUrl})` 
+      }]);
+    }
+  };
 
   const addBudgetItem = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -70,36 +125,6 @@ export default function App() {
     const message = `Olá! Gostaria de um orçamento para os seguintes itens:\n\n${budgetItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/5521998187716?text=${encodedMessage}`, '_blank');
-  };
-
-  const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsScanning(true);
-    try {
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
-      });
-      reader.readAsDataURL(file);
-      const base64 = await base64Promise;
-      
-      const items = await analyzeImage(base64);
-      if (items && items.length > 0) {
-        setBudgetItems(prev => [...prev, ...items]);
-        alert(`${items.length} itens identificados e adicionados à lista!`);
-      } else {
-        alert('Não conseguimos identificar itens na imagem. Tente uma foto mais nítida.');
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Erro ao processar imagem. Tente novamente.');
-    } finally {
-      setIsScanning(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
   };
   
   const heroRef = useRef<HTMLDivElement>(null);
@@ -348,6 +373,27 @@ export default function App() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* AI Chat Card */}
+            <div className="bento-item col-span-1 md:col-span-2 row-span-1 glass rounded-3xl p-8 flex flex-col justify-between overflow-hidden relative group">
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6">
+                  <MessageSquare className="text-emerald-500" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">Especialista 24h</h3>
+                <p className="text-white/50 text-sm mb-6 max-w-xs">
+                  Dúvidas sobre misturas ou materiais? Nosso chat treinado responde tudo instantaneamente.
+                </p>
+                <button 
+                  onClick={() => setChatOpen(true)}
+                  className="inline-flex items-center gap-2 text-emerald-500 font-bold hover:gap-3 transition-all"
+                >
+                  Iniciar Conversa <ChevronRight size={18} />
+                </button>
+              </div>
+              
+              <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-emerald-500/10 blur-3xl rounded-full"></div>
             </div>
 
             {/* Quality Card */}
@@ -678,7 +724,10 @@ export default function App() {
         {/* Budget Chat Button */}
         {!budgetChatOpen && (
           <button 
-            onClick={() => setBudgetChatOpen(true)}
+            onClick={() => {
+              setBudgetChatOpen(true);
+              setChatOpen(false);
+            }}
             className="w-16 h-16 bg-blue-600 text-white rounded-full shadow-[0_10px_30px_rgba(37,99,235,0.4)] flex flex-col items-center justify-center hover:scale-110 transition-transform group relative"
           >
             <ClipboardList size={24} />
@@ -688,6 +737,21 @@ export default function App() {
                 {budgetItems.length}
               </span>
             )}
+          </button>
+        )}
+
+        {/* Expert Chat Button */}
+        {!chatOpen && (
+          <button 
+            onClick={() => {
+              setChatOpen(true);
+              setBudgetChatOpen(false);
+            }}
+            className="w-16 h-16 bg-brand-accent text-white rounded-full shadow-[0_10px_30px_rgba(242,125,38,0.4)] flex flex-col items-center justify-center hover:scale-110 transition-transform group relative"
+          >
+            <MessageSquare size={24} />
+            <span className="text-[8px] font-bold uppercase mt-1">Dúvidas</span>
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-brand-bg rounded-full"></span>
           </button>
         )}
       </div>
@@ -708,32 +772,6 @@ export default function App() {
             <button onClick={() => setBudgetChatOpen(false)} className="text-white/60 hover:text-white">
               <X size={20} />
             </button>
-          </div>
-          
-          {/* Scanner Pro Obra Section */}
-          <div className="p-4 bg-blue-500/10 border-b border-white/5">
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isScanning}
-              className="w-full bg-brand-accent hover:bg-brand-accent/90 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(242,125,38,0.3)] disabled:opacity-50"
-            >
-              {isScanning ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Camera size={20} />
-              )}
-              Scanner Pro Obra 🚀
-            </button>
-            <p className="text-[10px] text-white/40 mt-2 text-center uppercase tracking-widest font-bold">
-              Não precisa digitar, só enviar a foto da lista de obras! 📸
-            </p>
-            <input 
-              type="file" 
-              ref={fileInputRef}
-              onChange={handleScan}
-              accept="image/*" 
-              className="hidden" 
-            />
           </div>
           
           <div className="h-80 p-6 overflow-y-auto flex flex-col gap-3 bg-brand-card/80">
@@ -786,6 +824,95 @@ export default function App() {
         </div>
       )}
 
+      {/* Mock AI Chat Modal */}
+      {chatOpen && (
+        <div className="fixed bottom-8 right-8 w-80 md:w-96 glass rounded-3xl overflow-hidden shadow-2xl z-[110] animate-in slide-in-from-bottom-10 duration-300">
+          <div className="bg-brand-accent p-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <MessageSquare className="text-white" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-sm">Especialista Ednaldo</h4>
+                <span className="text-[10px] text-white/60 uppercase tracking-widest">Online Agora</span>
+              </div>
+            </div>
+            <button onClick={() => setChatOpen(false)} className="text-white/60 hover:text-white">
+              <X size={20} />
+            </button>
+          </div>
+          <div className="h-80 p-6 overflow-y-auto flex flex-col gap-4 bg-brand-card/80">
+            {messages.map((msg, i) => (
+              <div 
+                key={i} 
+                className={cn(
+                  "rounded-2xl p-4 text-sm max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300 whitespace-pre-wrap",
+                  msg.role === 'user' 
+                    ? "bg-brand-accent text-white self-end rounded-tr-none" 
+                    : "bg-white/5 text-white/80 self-start rounded-tl-none"
+                )}
+              >
+                {msg.text.includes('https://wa.me/') ? (
+                  <div>
+                    {msg.text.split('\n\n')[0] && <p className="mb-3">{msg.text.split('\n\n')[0]}</p>}
+                    <a 
+                      href={msg.text.match(/https:\/\/wa\.me\/[^\)]+/)?.[0]} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white py-2 px-4 rounded-xl font-bold transition-all text-xs w-full no-underline"
+                    >
+                      <MessageSquare size={16} />
+                      Chamar no WhatsApp
+                    </a>
+                  </div>
+                ) : (
+                  msg.text
+                )}
+              </div>
+            ))}
+            {isTyping && (
+              <div className="bg-white/5 text-white/40 self-start rounded-2xl rounded-tl-none p-4 text-xs italic animate-pulse">
+                Especialista está digitando...
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+          <div className="p-4 border-t border-white/5 bg-brand-card flex flex-col gap-3">
+            <button 
+              onClick={async () => {
+                const history = messages.map(m => ({
+                  role: m.role,
+                  parts: [{ text: m.text }]
+                }));
+                const summary = await getConversationSummary(history);
+                const waMessage = `Tenho interesse em: "${summary}"`;
+                window.open(`https://wa.me/5521998187716?text=${encodeURIComponent(waMessage)}`, '_blank');
+              }}
+              className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white py-2.5 rounded-xl font-bold transition-all text-xs w-full"
+            >
+              <MessageSquare size={16} />
+              Enviar Interesse para WhatsApp
+            </button>
+            <form onSubmit={handleSendMessage} className="relative">
+              <input 
+                type="text" 
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Pergunte qualquer coisa..." 
+                disabled={isTyping}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-accent/50 disabled:opacity-50"
+              />
+              <button 
+                type="submit"
+                disabled={isTyping || !inputValue.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-accent disabled:opacity-30"
+              >
+                <ArrowRight size={20} />
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
