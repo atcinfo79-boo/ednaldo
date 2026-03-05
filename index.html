@@ -1,16 +1,770 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ednaldo Materiais de Construção - Premium</title>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ednaldo Materiais de Construção</title>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    
+    <!-- Tailwind CSS 3.4.1 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                        display: ['Syne', '"Playfair Display"', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            bg: '#050505',
+                            card: '#0a0a0a',
+                            accent: '#f27d26',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-brand-bg text-white font-sans antialiased;
+            }
+            h1, h2, h3, h4, h5, h6 {
+                @apply font-display tracking-tight;
+            }
+        }
+
+        @layer components {
+            .glass {
+                @apply bg-white/5 backdrop-blur-xl border border-white/10;
+            }
+            .bento-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(2, 300px);
+                gap: 1.5rem;
+            }
+            @media (max-width: 1024px) {
+                .bento-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                    grid-template-rows: auto;
+                }
+            }
+            @media (max-width: 640px) {
+                .bento-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .marquee-container {
+                overflow: hidden;
+                white-space: nowrap;
+                position: relative;
+            }
+            .marquee-content {
+                display: inline-block;
+                animation: marquee 30s linear infinite;
+            }
+            @keyframes marquee {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full z-50 glass border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-brand-accent rounded-lg flex items-center justify-center">
+                    <i data-lucide="hard-hat" class="text-white w-6 h-6"></i>
+                </div>
+                <span class="text-xl font-display font-bold tracking-tighter uppercase">
+                    Ednaldo <span class="text-brand-accent">materiais de</span> construção
+                </span>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-8 text-sm font-medium uppercase tracking-widest">
+                <a href="#inicio" class="hover:text-brand-accent transition-colors">Início</a>
+                <a href="#diferenciais" class="hover:text-brand-accent transition-colors">Diferenciais</a>
+                <a href="#calendario" class="hover:text-brand-accent transition-colors">Horários</a>
+                <a href="#sobre" class="hover:text-brand-accent transition-colors">Sobre</a>
+                <a href="#depoimentos" class="hover:text-brand-accent transition-colors">Depoimentos</a>
+            </nav>
+
+            <div class="hidden md:block">
+                <button class="bg-brand-accent hover:bg-brand-accent/90 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105 active:scale-95">
+                    Falar com Especialista
+                </button>
+            </div>
+
+            <button class="md:hidden" id="menu-toggle">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden glass absolute top-20 left-0 w-full p-6 flex flex-col gap-6 animate-in slide-in-from-top duration-300">
+            <a href="#inicio" class="menu-link">Início</a>
+            <a href="#diferenciais" class="menu-link">Diferenciais</a>
+            <a href="#calendario" class="menu-link">Horários</a>
+            <a href="#sobre" class="menu-link">Sobre</a>
+            <a href="#depoimentos" class="menu-link">Depoimentos</a>
+            <button class="bg-brand-accent text-white px-6 py-3 rounded-full font-bold">
+                Falar com Especialista
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section id="inicio" class="relative h-screen flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 z-0">
+                <img 
+                    src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2070&auto=format&fit=crop" 
+                    alt="Construção de Luxo" 
+                    class="w-full h-full object-cover scale-110"
+                    referrerpolicy="no-referrer"
+                />
+                <div class="absolute inset-0 bg-gradient-to-b from-brand-bg/80 via-brand-bg/60 to-brand-bg"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-brand-bg via-transparent to-brand-bg/40"></div>
+            </div>
+
+            <div class="relative z-10 max-w-5xl mx-auto px-6 text-center">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 animate-pulse">
+                    <span class="w-2 h-2 bg-brand-accent rounded-full"></span>
+                    <span class="text-xs font-bold uppercase tracking-widest">Melhor atendimento do Rio de Janeiro</span>
+                </div>
+                
+                <h1 class="text-5xl md:text-8xl font-display font-bold leading-[0.9] tracking-tighter mb-8">
+                    <div class="overflow-hidden">
+                        <span class="hero-title block">DO BÁSICO AO</span>
+                    </div>
+                    <div class="overflow-hidden">
+                        <span class="hero-title block text-brand-accent italic">ACABAMENTO</span>
+                    </div>
+                </h1>
+
+                <p class="hero-sub text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10 font-light leading-relaxed">
+                    Material de qualidade, preço justo e a entrega mais rápida da região. Transformamos sua obra em um projeto de excelência.
+                </p>
+
+                <div class="hero-cta flex flex-col md:flex-row items-center justify-center gap-4">
+                    <button class="group bg-brand-accent text-white px-10 py-5 rounded-full text-lg font-bold flex items-center gap-3 hover:shadow-[0_0_30px_rgba(242,125,38,0.4)] transition-all">
+                        Ver Catálogo Completo
+                        <i data-lucide="arrow-right" class="group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                    <button class="glass px-10 py-5 rounded-full text-lg font-bold hover:bg-white/10 transition-all">
+                        Simular Entrega
+                    </button>
+                </div>
+            </div>
+
+            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
+                <span class="text-[10px] uppercase tracking-[0.3em]">Scroll</span>
+                <div class="w-px h-12 bg-gradient-to-b from-white to-transparent"></div>
+            </div>
+        </section>
+
+        <!-- Marquee -->
+        <div class="py-12 border-y border-white/5 bg-brand-card/50 marquee-container">
+            <div class="marquee-content flex items-center gap-20" id="marquee-content">
+                <!-- Partners will be injected here -->
+            </div>
+        </div>
+
+        <!-- Differentials -->
+        <section id="diferenciais" class="py-32 px-6 max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+                <div class="max-w-xl">
+                    <h2 class="text-4xl md:text-6xl font-bold leading-none mb-6">
+                        POR QUE SOMOS <br />
+                        <span class="text-brand-accent italic">REFERÊNCIA?</span>
+                    </h2>
+                    <p class="text-white/50 text-lg">
+                        Combinamos tecnologia de ponta com o atendimento humano que você merece.
+                    </p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="text-right">
+                        <div class="text-3xl font-bold">100%</div>
+                        <div class="text-xs text-white/40 uppercase tracking-widest">Satisfação</div>
+                    </div>
+                    <div class="w-px h-12 bg-white/10"></div>
+                    <div class="text-right">
+                        <div class="text-3xl font-bold">+10k</div>
+                        <div class="text-xs text-white/40 uppercase tracking-widest">Obras Atendidas</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bento-grid">
+                <!-- Delivery Simulator Card -->
+                <div class="bento-item col-span-1 md:col-span-2 row-span-1 glass rounded-3xl p-8 flex flex-col justify-between overflow-hidden relative group">
+                    <div class="relative z-10">
+                        <div class="w-12 h-12 bg-brand-accent/20 rounded-2xl flex items-center justify-center mb-6">
+                            <i data-lucide="truck" class="text-brand-accent"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Simulador de Entrega</h3>
+                        <p class="text-white/50 text-sm mb-6 max-w-xs">
+                            Entregas de <span class="text-brand-accent font-bold">QUALQUER PORTE</span>. Grátis até 4km em qualquer direção! Taxa de R$ 20 após esse limite.
+                        </p>
+                        
+                        <form id="simulate-form" class="flex gap-2">
+                            <input 
+                                type="text" 
+                                id="cep-input"
+                                placeholder="Seu CEP" 
+                                class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-brand-accent/50 flex-1"
+                            />
+                            <button type="submit" id="simulate-btn" class="bg-brand-accent text-white px-4 py-2 rounded-xl text-sm font-bold">
+                                Simular
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="absolute bottom-0 right-0 w-1/2 h-full opacity-60 group-hover:opacity-80 transition-opacity overflow-hidden">
+                        <img 
+                            src="https://images.unsplash.com/photo-1483729558449-99ef09a8c325?q=80&w=1000&auto=format&fit=crop" 
+                            alt="Rio de Janeiro" 
+                            class="absolute inset-0 w-full h-full object-cover transition-all duration-700"
+                            referrerpolicy="no-referrer"
+                        />
+                        <div class="absolute inset-0 bg-gradient-to-r from-brand-bg via-transparent to-transparent z-10"></div>
+                        
+                        <div id="simulation-result" class="hidden absolute inset-0 z-20 flex items-center justify-center p-4">
+                            <div class="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center w-full max-w-[200px]">
+                                <div class="text-[10px] text-white/50 uppercase tracking-widest mb-1">Resultado</div>
+                                <div id="result-text" class="text-lg font-black mb-1"></div>
+                                <div id="result-distance" class="text-xs text-white/80"></div>
+                                <div class="mt-2 pt-2 border-t border-white/10 text-[9px] text-white/40 leading-tight">
+                                    Qualquer porte atendido • Entrega 24h
+                                </div>
+                                <button id="reset-simulate" class="mt-3 text-[9px] text-white/60 hover:text-white underline">
+                                    Nova Simulação
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="simulating-loader" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                            <div class="relative">
+                                <div class="w-6 h-6 bg-brand-accent rounded-full animate-ping"></div>
+                                <i data-lucide="truck" class="absolute top-0 left-0 text-brand-accent w-6 h-6"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Chat Card -->
+                <div class="bento-item col-span-1 md:col-span-2 row-span-1 glass rounded-3xl p-8 flex flex-col justify-between overflow-hidden relative group">
+                    <div class="relative z-10">
+                        <div class="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center mb-6">
+                            <i data-lucide="message-square" class="text-emerald-500"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Especialista 24h</h3>
+                        <p class="text-white/50 text-sm mb-6 max-w-xs">
+                            Dúvidas sobre misturas ou materiais? Nosso chat treinado responde tudo instantaneamente.
+                        </p>
+                        <button id="open-chat" class="inline-flex items-center gap-2 text-emerald-500 font-bold hover:gap-3 transition-all">
+                            Iniciar Conversa <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="absolute -bottom-10 -right-10 w-48 h-48 bg-emerald-500/10 blur-3xl rounded-full"></div>
+                </div>
+
+                <!-- Quality Card -->
+                <div class="bento-item col-span-1 md:col-span-1 row-span-1 glass rounded-3xl p-8 flex flex-col justify-between">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="shield-check" class="text-blue-500"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">Qualidade Premium</h3>
+                        <p class="text-white/50 text-xs leading-relaxed">
+                            Trabalhamos apenas com as melhores marcas do mercado nacional e internacional.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Service Card -->
+                <div class="bento-item col-span-1 md:col-span-1 row-span-1 glass rounded-3xl p-8 flex flex-col justify-between">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="star" class="text-purple-500"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">Melhor do Bairro</h3>
+                        <p class="text-white/50 text-xs leading-relaxed">
+                            Eleita a melhor loja do Andaraí pelo atendimento e agilidade.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Fast Delivery Card -->
+                <div class="bento-item col-span-1 md:col-span-2 row-span-1 glass rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="w-12 h-12 bg-brand-accent/20 rounded-2xl flex items-center justify-center mb-6">
+                            <i data-lucide="clock" class="text-brand-accent"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Entrega em 24h</h3>
+                        <p class="text-white/50 text-sm max-w-xs">
+                            Para itens em estoque, garantimos a entrega no dia seguinte. Sua obra não para.
+                        </p>
+                    </div>
+                    <div class="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] font-black italic">24H</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calendar Section -->
+        <section id="calendario" class="py-32 px-6 max-w-7xl mx-auto reveal-section">
+            <div class="grid md:grid-cols-2 gap-20 items-center">
+                <div>
+                    <h2 class="text-4xl md:text-6xl font-bold mb-8 leading-tight">
+                        ESTAMOS <br />
+                        <span class="text-brand-accent italic">DISPONÍVEIS</span>
+                    </h2>
+                    <p class="text-white/60 text-lg mb-8 leading-relaxed">
+                        Confira nosso calendário de funcionamento para Março de 2026. <br/>
+                        <span class="text-brand-accent font-bold">Domingos e Feriados:</span> Não funcionamos para garantir o descanso de nossa equipe de elite.
+                    </p>
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-center gap-4 glass p-4 rounded-2xl">
+                            <div class="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                                <div id="status-dot" class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                            </div>
+                            <div>
+                                <p id="status-text" class="text-sm font-bold"></p>
+                                <p id="formatted-date" class="text-xs text-white/40 uppercase tracking-widest"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-[3rem] p-8 md:p-12 relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <div class="flex items-center gap-6">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="calendar" class="text-brand-accent"></i>
+                                <span id="calendar-title" class="text-2xl font-display font-bold uppercase tracking-tighter capitalize"></span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="prev-month" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
+                                    <i data-lucide="chevron-left" class="text-white/60 w-4 h-4"></i>
+                                </button>
+                                <button id="next-month" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
+                                    <i data-lucide="chevron-right" class="text-white/60 w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-2 text-center mb-4">
+                        <div class="text-[10px] font-bold opacity-30 text-red-500">D</div>
+                        <div class="text-[10px] font-bold opacity-30">S</div>
+                        <div class="text-[10px] font-bold opacity-30">T</div>
+                        <div class="text-[10px] font-bold opacity-30">Q</div>
+                        <div class="text-[10px] font-bold opacity-30">Q</div>
+                        <div class="text-[10px] font-bold opacity-30">S</div>
+                        <div class="text-[10px] font-bold opacity-30">S</div>
+                    </div>
+
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-2">
+                        <!-- Calendar days will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="sobre" class="py-32 bg-brand-card/30 reveal-section">
+            <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-20 items-center">
+                <div class="relative">
+                    <div class="aspect-[4/5] rounded-3xl overflow-hidden">
+                        <img 
+                            src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2070&auto=format&fit=crop" 
+                            alt="Nossa Loja" 
+                            class="w-full h-full object-cover"
+                            referrerpolicy="no-referrer"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-4xl md:text-6xl font-bold mb-8 leading-tight">
+                        DO <span class="text-brand-accent italic">BÁSICO</span> AO <br />
+                        <span class="text-brand-accent italic">ACABAMENTO</span>
+                    </h2>
+                    <p class="text-white/60 text-lg mb-12 leading-relaxed">
+                        Somos uma empresa familiar que entende a importância do seu sonho. Na Ednaldo materiais de construção, você não é apenas um cliente, é um parceiro. Oferecemos consultoria técnica gratuita para garantir que você leve exatamente o que sua obra precisa.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Chat Modal -->
+    <div id="chat-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="close-chat-overlay"></div>
+        <div class="relative w-full max-w-2xl h-[80vh] glass rounded-[2rem] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-white/10 flex items-center justify-between bg-brand-card">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                        <i data-lucide="message-square" class="text-emerald-500"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">Especialista Ednaldo</h3>
+                        <p class="text-[10px] text-emerald-500 uppercase tracking-widest font-bold">Online agora</p>
+                    </div>
+                </div>
+                <button id="close-chat-btn" class="w-10 h-10 rounded-full hover:bg-white/5 flex items-center justify-center transition-colors">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <!-- Messages will be injected here -->
+            </div>
+
+            <form id="chat-form" class="p-6 border-t border-white/10 bg-brand-card">
+                <div class="flex gap-2">
+                    <input 
+                        type="text" 
+                        id="chat-input"
+                        placeholder="Tire sua dúvida técnica..." 
+                        class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-500/50 flex-1"
+                    />
+                    <button type="submit" class="bg-emerald-500 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-emerald-600 transition-colors">
+                        <i data-lucide="send"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <button id="floating-chat-btn" class="fixed bottom-8 right-8 w-16 h-16 bg-emerald-500 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-40">
+        <i data-lucide="message-square" class="text-white w-8 h-8"></i>
+    </button>
+
+    <script type="module">
+        import { GoogleGenAI } from "https://esm.run/@google/genai";
+
+        // Initialize Lucide
+        lucide.createIcons();
+
+        // Constants
+        const PARTNERS = ["Votorantim", "Suvinil", "Tigre", "Amanco", "Deca", "Coral", "Bosch", "Makita", "Gerdau"];
+        const HOLIDAYS_2026 = {
+            '0-1': 'Confraternização Universal',
+            '1-17': 'Carnaval',
+            '3-3': 'Sexta-feira Santa',
+            '3-21': 'Tiradentes',
+            '4-1': 'Dia do Trabalho',
+            '5-4': 'Corpus Christi',
+            '8-7': 'Independência do Brasil',
+            '9-12': 'Nossa Senhora Aparecida',
+            '10-2': 'Finados',
+            '10-15': 'Proclamação da República',
+            '10-20': 'Dia da Consciência Negra',
+            '11-25': 'Natal'
+        };
+
+        // State
+        let currentDate = new Date(2026, 2, 1);
+        let chatHistory = [
+            { role: 'model', parts: [{ text: 'Olá! Sou o assistente virtual da Ednaldo. Como posso ajudar na sua obra hoje?' }] },
+            { role: 'model', parts: [{ text: 'Posso tirar dúvidas sobre misturas de areia, colas para azulejos grandes ou prazos de entrega.' }] }
+        ];
+
+        // DOM Elements
+        const marqueeContent = document.getElementById('marquee-content');
+        const menuToggle = document.getElementById('menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const simulateForm = document.getElementById('simulate-form');
+        const cepInput = document.getElementById('cep-input');
+        const simulationResult = document.getElementById('simulation-result');
+        const resultText = document.getElementById('result-text');
+        const resultDistance = document.getElementById('result-distance');
+        const simulatingLoader = document.getElementById('simulating-loader');
+        const resetSimulate = document.getElementById('reset-simulate');
+        const calendarTitle = document.getElementById('calendar-title');
+        const calendarGrid = document.getElementById('calendar-grid');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+        const chatModal = document.getElementById('chat-modal');
+        const openChatBtn = document.getElementById('open-chat');
+        const floatingChatBtn = document.getElementById('floating-chat-btn');
+        const closeChatBtn = document.getElementById('close-chat-btn');
+        const closeChatOverlay = document.getElementById('close-chat-overlay');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+
+        // Initialize Marquee
+        [...PARTNERS, ...PARTNERS].forEach(partner => {
+            const span = document.createElement('span');
+            span.className = "text-2xl md:text-4xl font-display font-black text-white/10 uppercase tracking-tighter";
+            span.textContent = partner;
+            marqueeContent.appendChild(span);
+        });
+
+        // Mobile Menu Toggle
+        menuToggle.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        document.querySelectorAll('.menu-link').forEach(link => {
+            link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+        });
+
+        // Delivery Simulation
+        simulateForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const cep = cepInput.value.trim();
+            if (!cep) return alert('Por favor, digite um CEP.');
+
+            simulatingLoader.classList.remove('hidden');
+            simulationResult.classList.add('hidden');
+
+            setTimeout(() => {
+                const distance = Math.random() * 9 + 1;
+                const isFree = distance <= 4;
+                const fee = isFree ? 0 : 20;
+
+                simulatingLoader.classList.add('hidden');
+                simulationResult.classList.remove('hidden');
+                
+                resultText.textContent = isFree ? 'FRETE GRÁTIS' : `FRETE R$ ${fee.toFixed(0)}`;
+                resultText.className = `text-lg font-black mb-1 ${isFree ? 'text-emerald-400' : 'text-brand-accent'}`;
+                resultDistance.innerHTML = `Distância: <span class="font-bold">${distance.toFixed(1)} km</span>`;
+            }, 1500);
+        });
+
+        resetSimulate.addEventListener('click', () => {
+            simulationResult.classList.add('hidden');
+            cepInput.value = '';
+        });
+
+        // Calendar Logic
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const startDay = new Date(year, month, 1).getDay();
+            const today = new Date();
+
+            calendarTitle.textContent = currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+            calendarGrid.innerHTML = '';
+
+            // Empty slots
+            for (let i = 0; i < startDay; i++) {
+                calendarGrid.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayOfWeek = (day - 1 + startDay) % 7;
+                const isSun = dayOfWeek === 0;
+                const holidayKey = `${month}-${day}`;
+                const holidayName = HOLIDAYS_2026[holidayKey];
+                const isHoliday = !!holidayName;
+                const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+
+                const div = document.createElement('div');
+                div.className = `aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-bold transition-all relative group ${
+                    (isSun || isHoliday) ? "bg-red-500/10 text-red-500 cursor-not-allowed" : "bg-white/5 text-white/60"
+                } ${isToday ? "bg-brand-accent text-white shadow-[0_0_20px_rgba(242,125,38,0.4)] scale-110 z-10" : ""}`;
+                
+                div.innerHTML = `<span>${day}</span>`;
+                
+                if (isSun || isHoliday) {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = "absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity z-30";
+                    tooltip.innerHTML = `<div class="bg-red-500 text-[8px] text-white px-1.5 py-0.5 rounded-sm uppercase whitespace-nowrap shadow-lg">${holidayName || 'Fechado'}</div>`;
+                    div.appendChild(tooltip);
+                }
+
+                if (isToday) {
+                    const dot = document.createElement('div');
+                    dot.className = "absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full";
+                    div.appendChild(dot);
+                }
+
+                calendarGrid.appendChild(div);
+            }
+        }
+
+        prevMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // Status Bar
+        function updateStatus() {
+            const today = new Date();
+            const isSunday = today.getDay() === 0;
+            const statusText = isSunday ? 'Domingos: Fechado' : `Hoje: Aberto até 18:30`;
+            const formattedDate = today.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+            
+            document.getElementById('status-text').textContent = statusText;
+            document.getElementById('formatted-date').textContent = formattedDate;
+            if (isSunday) document.getElementById('status-dot').classList.remove('animate-pulse');
+        }
+
+        // Chat Logic
+        const ai = new GoogleGenAI({ apiKey: "[[API_KEY_PLACEHOLDER]]" }); // The platform will replace this if served, or user can fill it.
+
+        function addMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            const inner = document.createElement('div');
+            inner.className = `max-w-[80%] p-4 rounded-2xl text-sm ${
+                role === 'user' ? 'bg-emerald-500 text-white rounded-tr-none' : 'bg-white/5 text-white/80 rounded-tl-none border border-white/10'
+            }`;
+            
+            // Handle links in text (simple markdown link support)
+            const formattedText = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="underline font-bold text-brand-accent">$1</a>');
+            inner.innerHTML = formattedText.replace(/\n/g, '<br>');
+            
+            div.appendChild(inner);
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function handleChat(e) {
+            e.preventDefault();
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+
+            chatInput.value = '';
+            addMessage('user', msg);
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.className = "flex justify-start animate-pulse";
+            typingDiv.innerHTML = `<div class="bg-white/5 p-4 rounded-2xl text-xs text-white/40 italic">Especialista está digitando...</div>`;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const model = ai.getGenerativeModel({ model: "gemini-3-flash-preview" });
+                const chat = model.startChat({
+                    history: chatHistory,
+                    systemInstruction: `Você é o Especialista Ednaldo, um vendedor veterano e muito gente boa da "Ednaldo Materiais de Construção" no Andaraí, Rio de Janeiro. 
+Seu objetivo é ajudar os clientes com dicas técnicas reais, como se estivesse conversando no balcão da loja.
+REGRAS CRÍTICAS DE FORMATAÇÃO:
+1. NUNCA use negrito com asteriscos. Use apenas texto puro.
+2. Use quebras de linha para separar parágrafos.
+3. Não use listas com muitos símbolos.
+Seu tom é: Amigável, experiente, carioca e prestativo.
+Logística: Entregas em 24h no Rio. Grátis até 4km da loja (R. Leopoldo, 106 - Andaraí). Acima de 4km taxa fixa de R$ 20.`
+                });
+
+                const result = await chat.sendMessage(msg);
+                const responseText = result.response.text().replace(/\*/g, '');
+                
+                chatMessages.removeChild(typingDiv);
+                addMessage('model', responseText);
+                chatHistory.push({ role: 'user', parts: [{ text: msg }] });
+                chatHistory.push({ role: 'model', parts: [{ text: responseText }] });
+            } catch (err) {
+                console.error(err);
+                chatMessages.removeChild(typingDiv);
+                addMessage('model', 'Desculpe, tive um problema técnico. Chame a gente no WhatsApp: (21) 99818-7716');
+            }
+        }
+
+        chatForm.addEventListener('submit', handleChat);
+
+        // Modal Controls
+        function toggleChat(show) {
+            chatModal.classList.toggle('hidden', !show);
+            if (show && chatMessages.children.length === 0) {
+                chatHistory.forEach(m => addMessage(m.role, m.parts[0].text));
+            }
+        }
+
+        openChatBtn.addEventListener('click', () => toggleChat(true));
+        floatingChatBtn.addEventListener('click', () => toggleChat(true));
+        closeChatBtn.addEventListener('click', () => toggleChat(false));
+        closeChatOverlay.addEventListener('click', () => toggleChat(false));
+
+        // GSAP Animations
+        gsap.registerPlugin(ScrollTrigger);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderCalendar();
+            updateStatus();
+
+            gsap.from('.hero-title', {
+                y: 100,
+                opacity: 0,
+                duration: 1.2,
+                ease: 'power4.out',
+                stagger: 0.2
+            });
+            
+            gsap.from('.hero-sub', {
+                y: 50,
+                opacity: 0,
+                duration: 1,
+                delay: 0.6,
+                ease: 'power3.out'
+            });
+            
+            gsap.from('.hero-cta', {
+                scale: 0.8,
+                opacity: 0,
+                duration: 0.8,
+                delay: 1,
+                ease: 'back.out(1.7)'
+            });
+
+            gsap.utils.toArray('.reveal-section').forEach(section => {
+                gsap.from(section, {
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top 80%',
+                    },
+                    y: 60,
+                    opacity: 0,
+                    duration: 1,
+                    ease: 'power3.out'
+                });
+            });
+
+            gsap.from('.bento-item', {
+                scrollTrigger: {
+                    trigger: '.bento-grid',
+                    start: 'top 70%'
+                },
+                y: 50,
+                opacity: 0,
+                duration: 0.8,
+                stagger: 0.1,
+                ease: 'power2.out'
+            });
+        });
+    </script>
+</body>
 </html>

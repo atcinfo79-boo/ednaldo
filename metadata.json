@@ -1,5 +1,5 @@
 {
   "name": "Especialista Ednaldo - Chat Inteligente com Google Search",
   "description": "Chat inteligente para materiais de construção com integração em tempo real via Google Search Grounding para especificações técnicas e tendências.",
-  "requestFramePermissions": ["geolocation"]
+  "requestFramePermissions": ["geolocation", "camera"]
 }

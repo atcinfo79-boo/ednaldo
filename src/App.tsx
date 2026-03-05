@@ -119,10 +119,17 @@ export default function App() {
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsTyping(true);
 
-    const history = messages.map(m => ({
-      role: m.role,
-      parts: [{ text: m.text }]
-    }));
+    const history: { role: 'user' | 'model', parts: { text: string }[] }[] = [];
+    messages.forEach(m => {
+      if (history.length > 0 && history[history.length - 1].role === m.role) {
+        history[history.length - 1].parts[0].text += '\n' + m.text;
+      } else {
+        history.push({
+          role: m.role,
+          parts: [{ text: m.text }]
+        });
+      }
+    });
 
     const response = await getChatResponse(userMessage, history);
     setMessages(prev => [...prev, { role: 'model', text: response }]);
@@ -141,7 +148,13 @@ export default function App() {
                         lowerInput.includes('tem aí');
 
     if (needsBudget) {
-      const summary = await getConversationSummary([...history, { role: 'model', parts: [{ text: response }] }]);
+      const updatedHistory = [...history];
+      if (updatedHistory.length > 0 && updatedHistory[updatedHistory.length - 1].role === 'model') {
+        updatedHistory[updatedHistory.length - 1].parts[0].text += '\n' + response;
+      } else {
+        updatedHistory.push({ role: 'model', parts: [{ text: response }] });
+      }
+      const summary = await getConversationSummary(updatedHistory);
       const waMessage = `Tenho interesse em: "${summary}"`;
       const waUrl = `https://wa.me/5521998187716?text=${encodeURIComponent(waMessage)}`;
       
@@ -1156,10 +1169,17 @@ export default function App() {
           <div className="p-4 border-t border-white/5 bg-brand-card flex flex-col gap-3">
             <button 
               onClick={async () => {
-                const history = messages.map(m => ({
-                  role: m.role,
-                  parts: [{ text: m.text }]
-                }));
+                const history: { role: 'user' | 'model', parts: { text: string }[] }[] = [];
+                messages.forEach(m => {
+                  if (history.length > 0 && history[history.length - 1].role === m.role) {
+                    history[history.length - 1].parts[0].text += '\n' + m.text;
+                  } else {
+                    history.push({
+                      role: m.role,
+                      parts: [{ text: m.text }]
+                    });
+                  }
+                });
                 const summary = await getConversationSummary(history);
                 const waMessage = `Tenho interesse em: "${summary}"`;
                 window.open(`https://wa.me/5521998187716?text=${encodeURIComponent(waMessage)}`, '_blank');
