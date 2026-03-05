@@ -20,12 +20,13 @@ import {
   Plus,
   Trash2,
   Send,
+  Camera,
   Calendar as CalendarIcon
 } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cn } from './lib/utils';
-import { getChatResponse, getConversationSummary } from './services/geminiService';
+import { getChatResponse, getConversationSummary, analyzeImage } from './services/geminiService';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -52,11 +53,12 @@ export default function App() {
   const [budgetItemInput, setBudgetItemInput] = useState('');
   
   const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([
-    { role: 'model', text: 'Olá! Sou o assistente virtual da Ednaldo. Como posso ajudar na sua obra hoje?' },
-    { role: 'model', text: 'Posso tirar dúvidas sobre misturas de areia, colas para azulejos grandes ou prazos de entrega.' }
+    { role: 'model', text: 'Olá! Sou o assistente virtual da Ednaldo. Como posso ajudar na sua obra hoje? Posso tirar dúvidas sobre misturas de areia, colas para azulejos grandes ou prazos de entrega.' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -73,16 +75,18 @@ export default function App() {
 
     const userMessage = inputValue.trim();
     setInputValue('');
-    setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+    const newMessages = [...messages, { role: 'user' as const, text: userMessage }];
+    setMessages(newMessages);
     setIsTyping(true);
 
-    const history = messages.map(m => ({
+    const history = newMessages.slice(0, -1).map(m => ({
       role: m.role,
       parts: [{ text: m.text }]
     }));
 
     const response = await getChatResponse(userMessage, history);
-    setMessages(prev => [...prev, { role: 'model', text: response }]);
+    const finalMessages = [...newMessages, { role: 'model' as const, text: response }];
+    setMessages(finalMessages);
     setIsTyping(false);
 
     // Check if we should show the WhatsApp button
@@ -98,13 +102,17 @@ export default function App() {
                         lowerInput.includes('tem aí');
 
     if (needsBudget) {
-      const summary = await getConversationSummary([...history, { role: 'model', parts: [{ text: response }] }]);
+      const summaryHistory = finalMessages.map(m => ({
+        role: m.role,
+        parts: [{ text: m.text }]
+      }));
+      const summary = await getConversationSummary(summaryHistory);
       const waMessage = `Tenho interesse em: "${summary}"`;
       const waUrl = `https://wa.me/5521998187716?text=${encodeURIComponent(waMessage)}`;
       
       setMessages(prev => [...prev, { 
         role: 'model', 
-        text: `\n\n[Clique aqui para chamar no WhatsApp](${waUrl})` 
+        text: `Fale com um vendedor agora para fechar seu pedido de ${summary}:\n\n[Clique aqui para chamar no WhatsApp](${waUrl})` 
       }]);
     }
   };
@@ -125,6 +133,36 @@ export default function App() {
     const message = `Olá! Gostaria de um orçamento para os seguintes itens:\n\n${budgetItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/5521998187716?text=${encodedMessage}`, '_blank');
+  };
+
+  const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    try {
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64 = await base64Promise;
+      
+      const items = await analyzeImage(base64);
+      if (items && items.length > 0) {
+        setBudgetItems(prev => [...prev, ...items]);
+        alert(`${items.length} itens identificados e adicionados à lista!`);
+      } else {
+        alert('Não conseguimos identificar itens na imagem. Tente uma foto mais nítida.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao processar imagem. Tente novamente.');
+    } finally {
+      setIsScanning(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
   
   const heroRef = useRef<HTMLDivElement>(null);
@@ -774,6 +812,32 @@ export default function App() {
             </button>
           </div>
           
+          {/* Scanner Pro Obra Section */}
+          <div className="p-4 bg-blue-500/10 border-b border-white/5">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isScanning}
+              className="w-full bg-brand-accent hover:bg-brand-accent/90 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(242,125,38,0.3)] disabled:opacity-50"
+            >
+              {isScanning ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Camera size={20} />
+              )}
+              Scanner Pro Obra 🚀
+            </button>
+            <p className="text-[10px] text-white/40 mt-2 text-center uppercase tracking-widest font-bold">
+              Não precisa digitar, só enviar a foto da lista de obras! 📸
+            </p>
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              onChange={handleScan}
+              accept="image/*" 
+              className="hidden" 
+            />
+          </div>
+          
           <div className="h-80 p-6 overflow-y-auto flex flex-col gap-3 bg-brand-card/80">
             {budgetItems.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
@@ -854,7 +918,7 @@ export default function App() {
               >
                 {msg.text.includes('https://wa.me/') ? (
                   <div>
-                    {msg.text.split('\n\n')[0] && <p className="mb-3">{msg.text.split('\n\n')[0]}</p>}
+                    <p className="mb-3">{msg.text.split('\n\n')[0]}</p>
                     <a 
                       href={msg.text.match(/https:\/\/wa\.me\/[^\)]+/)?.[0]} 
                       target="_blank" 

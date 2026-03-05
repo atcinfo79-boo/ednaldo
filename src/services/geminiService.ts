@@ -27,8 +27,14 @@ Conhecimentos que você domina:
 Regras de comportamento:
 1. Se o usuário perguntar algo fora de construção, gentilmente traga de volta para o assunto da loja.
 2. Mencione que a Ednaldo tem os melhores preços e qualidade do Rio.
-3. Se a dúvida for muito complexa, ou se o cliente demonstrar interesse em comprar, orçar ou saber estoque, sugira falar com um vendedor no WhatsApp. O sistema gerará automaticamente um botão de WhatsApp após sua resposta, então NÃO tente criar links, botões ou placeholders como "[Botão do WhatsApp]" na sua resposta.
+3. Se a dúvida for muito complexa, ou se o cliente demonstrar interesse em comprar, orçar ou saber estoque, sugira falar com um vendedor no WhatsApp.
 4. Responda sempre em Português do Brasil.`;
+
+  // Ensure history alternates roles and doesn't have consecutive same roles
+  const cleanHistory = history.filter((item, index) => {
+    if (index === 0) return true;
+    return item.role !== history[index - 1].role;
+  });
 
   try {
     const chat = ai.chats.create({
@@ -36,11 +42,10 @@ Regras de comportamento:
       config: {
         systemInstruction,
       },
-      history: history,
+      history: cleanHistory,
     });
 
     const result = await chat.sendMessage({ message });
-    // Cleanup any accidental markdown or asterisks
     return result.text.replace(/\*/g, '');
   } catch (error) {
     console.error("Gemini API Error:", error);
@@ -54,11 +59,17 @@ export async function getConversationSummary(history: { role: 'user' | 'model', 
   Responda APENAS com o nome do material ou serviço, de forma curta e direta (ex: "Cimento e Areia", "Pisos de Porcelanato", "Tintas para Parede"). 
   Não use frases completas, não use asteriscos, não use pontuação final.`;
 
+  // Ensure history alternates roles for summary too
+  const cleanHistory = history.filter((item, index) => {
+    if (index === 0) return true;
+    return item.role !== history[index - 1].role;
+  });
+
   try {
     const response = await ai.models.generateContent({
       model,
       contents: [
-        ...history,
+        ...cleanHistory,
         { role: "user", parts: [{ text: prompt }] }
       ],
     });
@@ -67,5 +78,39 @@ export async function getConversationSummary(history: { role: 'user' | 'model', 
   } catch (error) {
     console.error("Summary Error:", error);
     return "Materiais de construção";
+  }
+}
+
+export async function analyzeImage(base64Data: string) {
+  const model = "gemini-3-flash-preview";
+  const prompt = "Aja como um especialista em materiais de construção. Identifique todos os produtos e quantidades nesta imagem de lista de materiais. Retorne APENAS um array JSON de strings, exemplo: [\"10 sacos de cimento\", \"5 latas de tinta\"]. Não inclua explicações, apenas o JSON puro.";
+
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: base64Data,
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const text = response.text || "";
+    const jsonMatch = text.match(/\[.*\]/s);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]) as string[];
+    }
+    return [];
+  } catch (error) {
+    console.error("Image Analysis Error:", error);
+    return [];
   }
 }
