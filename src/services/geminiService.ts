@@ -9,6 +9,13 @@ export async function getChatResponse(message: string, history: { role: 'user' |
 
 Seu objetivo é ajudar os clientes com dicas técnicas reais, como se estivesse conversando no balcão da loja.
 
+🛠️ NOVIDADE: Você agora tem acesso à Pesquisa Google em tempo real! 
+Use essa ferramenta sempre que:
+- Precisar de especificações técnicas atualizadas de produtos.
+- Quiser detalhes sobre marcas parceiras como Suvinil, Tigre, Bosch, Amanco, etc.
+- Precisar verificar tendências atuais do mercado de construção.
+- Estiver em dúvida sobre alguma norma técnica ou aplicação específica.
+
 REGRAS CRÍTICAS DE FORMATAÇÃO:
 1. NUNCA use negrito com asteriscos (ex: **texto**). Use apenas texto puro.
 2. Use quebras de linha (pressione Enter) para separar parágrafos e tornar a leitura fácil.
@@ -35,16 +42,35 @@ Regras de comportamento:
       model,
       config: {
         systemInstruction,
+        tools: [{ googleSearch: {} }],
       },
       history: history,
     });
 
     const result = await chat.sendMessage({ message });
+    
+    // Extract grounding sources
+    const sources: { uri: string, title: string }[] = [];
+    const chunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    if (chunks) {
+      chunks.forEach((chunk: any) => {
+        if (chunk.web && chunk.web.uri && chunk.web.title) {
+          sources.push({ uri: chunk.web.uri, title: chunk.web.title });
+        }
+      });
+    }
+
     // Cleanup any accidental markdown or asterisks
-    return result.text.replace(/\*/g, '');
+    return {
+      text: result.text.replace(/\*/g, ''),
+      sources: sources.slice(0, 3) // Top 3 sources as requested
+    };
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Desculpe, tive um problema técnico. Pode repetir ou nos chamar no WhatsApp? (21) 99818-7716";
+    return {
+      text: "Desculpe, tive um problema técnico. Pode repetir ou nos chamar no WhatsApp? (21) 99818-7716",
+      sources: []
+    };
   }
 }
 

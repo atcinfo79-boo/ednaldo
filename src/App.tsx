@@ -20,6 +20,7 @@ import {
   Plus,
   Trash2,
   Send,
+  ExternalLink,
   Calendar as CalendarIcon
 } from 'lucide-react';
 import { gsap } from 'gsap';
@@ -51,7 +52,7 @@ export default function App() {
   const [budgetItems, setBudgetItems] = useState<string[]>([]);
   const [budgetItemInput, setBudgetItemInput] = useState('');
   
-  const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([
+  const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string, sources?: { uri: string, title: string }[] }[]>([
     { role: 'model', text: 'Olá! Sou o assistente virtual da Ednaldo. Como posso ajudar na sua obra hoje?' },
     { role: 'model', text: 'Posso tirar dúvidas sobre misturas de areia, colas para azulejos grandes ou prazos de entrega.' }
   ]);
@@ -81,12 +82,15 @@ export default function App() {
       parts: [{ text: m.text }]
     }));
 
-    const response = await getChatResponse(userMessage, history);
-    setMessages(prev => [...prev, { role: 'model', text: response }]);
+    const responseData = await getChatResponse(userMessage, history);
+    const responseText = responseData.text;
+    const responseSources = responseData.sources;
+
+    setMessages(prev => [...prev, { role: 'model', text: responseText, sources: responseSources }]);
     setIsTyping(false);
 
     // Check if we should show the WhatsApp button
-    const lowerResponse = response.toLowerCase();
+    const lowerResponse = responseText.toLowerCase();
     const lowerInput = userMessage.toLowerCase();
     const needsBudget = lowerResponse.includes('whatsapp') || 
                         lowerResponse.includes('orçamento') || 
@@ -98,7 +102,7 @@ export default function App() {
                         lowerInput.includes('tem aí');
 
     if (needsBudget) {
-      const summary = await getConversationSummary([...history, { role: 'model', parts: [{ text: response }] }]);
+      const summary = await getConversationSummary([...history, { role: 'model', parts: [{ text: responseText }] }]);
       const waMessage = `Tenho interesse em: "${summary}"`;
       const waUrl = `https://wa.me/5521998187716?text=${encodeURIComponent(waMessage)}`;
       
@@ -866,7 +870,28 @@ export default function App() {
                     </a>
                   </div>
                 ) : (
-                  msg.text
+                  <div>
+                    <p>{msg.text}</p>
+                    {msg.sources && msg.sources.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-white/10">
+                        <p className="text-[10px] uppercase tracking-widest text-white/40 mb-2 font-bold">Fontes consultadas:</p>
+                        <div className="flex flex-col gap-2">
+                          {msg.sources.map((source, idx) => (
+                            <a 
+                              key={idx}
+                              href={source.uri}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-[11px] text-brand-accent hover:underline group/link"
+                            >
+                              <ExternalLink size={10} className="shrink-0" />
+                              <span className="truncate">{source.title}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
