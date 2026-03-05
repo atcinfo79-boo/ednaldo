@@ -540,7 +540,7 @@ export default function App() {
                          Distância: <span className="font-bold">{simulationResult.distance.toFixed(1)} km</span>
                        </div>
                        <div className="mt-2 pt-2 border-t border-white/10 text-[9px] text-white/40 leading-tight">
-                         Qualquer porte atendido • Entrega 24h
+                         Qualquer porte atendido • Entrega Express 72h*
                        </div>
                        <button 
                         onClick={() => setSimulationResult(null)}
@@ -610,19 +610,24 @@ export default function App() {
               </div>
             </div>
 
-            {/* Fast Delivery Card */}
+            {/* Express Delivery Card */}
             <div className="bento-item col-span-1 md:col-span-2 row-span-1 glass rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden">
               <div className="relative z-10">
                 <div className="w-12 h-12 bg-brand-accent/20 rounded-2xl flex items-center justify-center mb-6">
                   <Clock className="text-brand-accent" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Entrega em 24h</h3>
-                <p className="text-white/50 text-sm max-w-xs">
-                  Para itens em estoque, garantimos a entrega no dia seguinte. Sua obra não para.
-                </p>
+                <h3 className="text-2xl font-bold mb-4">Entrega</h3>
+                <div className="flex flex-col gap-2">
+                  <p className="text-white/50 text-sm max-w-xs">
+                    Garantimos a entrega em no <span className="text-brand-accent font-bold">máximo 72h</span> para que sua obra não pare.
+                  </p>
+                  <p className="text-[10px] text-white/30 italic leading-tight">
+                    *Na falta de materiais o tempo poderá sofrer reajuste conforme disponibilidade do fornecedor.
+                  </p>
+                </div>
               </div>
               <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] font-black italic">24H</div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[6rem] md:text-[8rem] font-black italic">EXPRESS</div>
               </div>
             </div>
           </div>
