@@ -8,6 +8,7 @@ import {
   Phone, 
   Star, 
   ChevronRight, 
+  ChevronLeft,
   Menu, 
   X,
   ArrowRight,
@@ -47,6 +48,12 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [cep, setCep] = useState('');
   const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationResult, setSimulationResult] = useState<{
+    distance: number;
+    fee: number;
+    isFree: boolean;
+  } | null>(null);
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 2, 1)); // Start at March 2026 as per current context
   const [chatOpen, setChatOpen] = useState(false);
   const [budgetChatOpen, setBudgetChatOpen] = useState(false);
   const [budgetItems, setBudgetItems] = useState<string[]>([]);
@@ -228,17 +235,111 @@ export default function App() {
     return () => ctx.revert();
   }, []);
 
+  const STORE_COORDS = { lat: -22.9258, lng: -43.2384 };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+  };
+
   const handleSimulate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cep) return;
+    
+    // Check if user wants to use geolocation or just CEP
+    if (!cep && !navigator.geolocation) {
+      alert('Por favor, digite um CEP ou permita o acesso à sua localização.');
+      return;
+    }
+
     setIsSimulating(true);
-    setTimeout(() => setIsSimulating(false), 3000);
+    setSimulationResult(null);
+
+    const processResult = (distance: number) => {
+      setIsSimulating(false);
+      const isFree = distance <= 4;
+      const fee = isFree ? 0 : 20;
+      
+      setSimulationResult({ distance, fee, isFree });
+    };
+
+    // If CEP is provided, simulate a distance (since we don't have a geocoder)
+    if (cep) {
+      setTimeout(() => {
+        // Random distance between 1 and 10km for simulation
+        const simulatedDistance = Math.random() * 9 + 1;
+        processResult(simulatedDistance);
+      }, 2000);
+    } else {
+      // Use real geolocation
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const dist = calculateDistance(
+            STORE_COORDS.lat, 
+            STORE_COORDS.lng, 
+            position.coords.latitude, 
+            position.coords.longitude
+          );
+          processResult(dist);
+        },
+        () => {
+          setIsSimulating(false);
+          alert('Não foi possível obter sua localização. Por favor, digite seu CEP.');
+        }
+      );
+    }
   };
 
   const today = new Date();
-  const isMarch2026 = today.getMonth() === 2 && today.getFullYear() === 2026;
-  const daysInMarch = 31;
-  const marchStartDay = 0; // March 1st 2026 is Sunday (0)
+  const HOLIDAYS_2026: Record<string, string> = {
+    '0-1': 'Confraternização Universal',
+    '1-17': 'Carnaval',
+    '3-3': 'Sexta-feira Santa',
+    '3-21': 'Tiradentes',
+    '4-1': 'Dia do Trabalho',
+    '5-4': 'Corpus Christi',
+    '8-7': 'Independência do Brasil',
+    '9-12': 'Nossa Senhora Aparecida',
+    '10-2': 'Finados',
+    '10-15': 'Proclamação da República',
+    '10-20': 'Dia da Consciência Negra',
+    '11-25': 'Natal'
+  };
+
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+  const nextMonth = () => {
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const prevMonth = () => {
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const monthName = currentDate.toLocaleString('pt-BR', { month: 'long' });
+  const year = currentDate.getFullYear();
+  const daysInMonth = getDaysInMonth(year, currentDate.getMonth());
+  const startDay = getFirstDayOfMonth(year, currentDate.getMonth());
+
+  const hasBridgeHoliday = () => {
+    const month = currentDate.getMonth();
+    if (year !== 2026) return false;
+    
+    // Check if any holiday in this month falls on Tuesday (2) or Thursday (4)
+    return Object.keys(HOLIDAYS_2026).some(key => {
+      const [m, d] = key.split('-').map(Number);
+      if (m !== month) return false;
+      const dayOfWeek = new Date(2026, m, d).getDay();
+      return dayOfWeek === 2 || dayOfWeek === 4;
+    });
+  };
 
   const getDayName = (date: Date) => {
     return date.toLocaleDateString('pt-BR', { weekday: 'long' });
@@ -398,7 +499,7 @@ export default function App() {
                 </div>
                 <h3 className="text-2xl font-bold mb-4">Simulador de Entrega</h3>
                 <p className="text-white/50 text-sm mb-6 max-w-xs">
-                  Saiba exatamente onde está seu material. Mapa ao vivo e frete calculado na hora.
+                  Entregas de <span className="text-brand-accent font-bold">QUALQUER PORTE</span>. Grátis até 4km em qualquer direção! Taxa de R$ 20 após esse limite.
                 </p>
                 
                 <form onSubmit={handleSimulate} className="flex gap-2">
@@ -415,14 +516,47 @@ export default function App() {
                 </form>
               </div>
 
-              {/* Mock Map Background */}
-              <div className="absolute bottom-0 right-0 w-1/2 h-full opacity-20 group-hover:opacity-40 transition-opacity">
-                <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop')] bg-cover"></div>
+              {/* Map & RJ Photo Background */}
+              <div className="absolute bottom-0 right-0 w-1/2 h-full opacity-60 group-hover:opacity-80 transition-opacity overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1483729558449-99ef09a8c325?q=80&w=1000&auto=format&fit=crop" 
+                  alt="Cristo Redentor de longe - Rio de Janeiro" 
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-brand-bg via-transparent to-transparent z-10"></div>
+                
+                {simulationResult && !isSimulating && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+                    <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-white/10 animate-in fade-in zoom-in duration-500 text-center w-full max-w-[200px]">
+                       <div className="text-[10px] text-white/50 uppercase tracking-widest mb-1">Resultado</div>
+                       <div className={cn(
+                         "text-lg font-black mb-1",
+                         simulationResult.isFree ? "text-emerald-400" : "text-brand-accent"
+                       )}>
+                         {simulationResult.isFree ? 'FRETE GRÁTIS' : `FRETE R$ ${simulationResult.fee.toFixed(0)}`}
+                       </div>
+                       <div className="text-xs text-white/80">
+                         Distância: <span className="font-bold">{simulationResult.distance.toFixed(1)} km</span>
+                       </div>
+                       <div className="mt-2 pt-2 border-t border-white/10 text-[9px] text-white/40 leading-tight">
+                         Qualquer porte atendido • Entrega 24h
+                       </div>
+                       <button 
+                        onClick={() => setSimulationResult(null)}
+                        className="mt-3 text-[9px] text-white/60 hover:text-white underline"
+                       >
+                        Nova Simulação
+                       </button>
+                    </div>
+                  </div>
+                )}
+
                 {isSimulating && (
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
                     <div className="relative">
-                      <div className="w-4 h-4 bg-brand-accent rounded-full animate-ping"></div>
-                      <Truck className="absolute top-0 left-0 text-brand-accent w-4 h-4" />
+                      <div className="w-6 h-6 bg-brand-accent rounded-full animate-ping"></div>
+                      <Truck className="absolute top-0 left-0 text-brand-accent w-6 h-6" />
                     </div>
                   </div>
                 )}
@@ -471,7 +605,7 @@ export default function App() {
               <div>
                 <h3 className="text-xl font-bold mb-2">Melhor do Bairro</h3>
                 <p className="text-white/50 text-xs leading-relaxed">
-                  Eleita a melhor loja do Andaraí pelo atendimento e agilidade.
+                  Eleita a melhor loja do Andaraí e proximidades pelo atendimento e agilidade.
                 </p>
               </div>
             </div>
@@ -530,11 +664,29 @@ export default function App() {
 
             <div className="glass rounded-[3rem] p-8 md:p-12 relative overflow-hidden">
               <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-3">
-                  <CalendarIcon className="text-brand-accent" />
-                  <span className="text-2xl font-display font-bold uppercase tracking-tighter">Março 2026</span>
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-3">
+                    <CalendarIcon className="text-brand-accent" />
+                    <span className="text-2xl font-display font-bold uppercase tracking-tighter capitalize">
+                      {monthName} {year}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={prevMonth}
+                      className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                    >
+                      <ChevronLeft className="text-white/60" size={14} />
+                    </button>
+                    <button 
+                      onClick={nextMonth}
+                      className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                    >
+                      <ChevronRight className="text-white/60" size={14} />
+                    </button>
+                  </div>
                 </div>
-                <span className="text-xs text-white/40 uppercase tracking-widest font-bold">Calendário Oficial</span>
+                <span className="text-xs text-white/40 uppercase tracking-widest font-bold hidden sm:block">Calendário Oficial</span>
               </div>
 
               <div className="grid grid-cols-7 gap-2 text-center mb-4">
@@ -544,26 +696,35 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-7 gap-2">
-                {/* March 2026 starts on Sunday (1st) */}
-                {Array.from({ length: daysInMarch }).map((_, i) => {
+                {/* Empty slots for previous month days */}
+                {Array.from({ length: startDay }).map((_, i) => (
+                  <div key={`empty-${i}`} className="aspect-square"></div>
+                ))}
+                
+                {Array.from({ length: daysInMonth }).map((_, i) => {
                   const day = i + 1;
-                  const dayOfWeek = (day - 1 + marchStartDay) % 7;
+                  const dayOfWeek = (day - 1 + startDay) % 7;
                   const isSun = dayOfWeek === 0;
-                  const isToday = isMarch2026 && day === today.getDate();
+                  const holidayKey = `${currentDate.getMonth()}-${day}`;
+                  const holidayName = HOLIDAYS_2026[holidayKey];
+                  const isHoliday = !!holidayName;
+                  const isToday = today.getDate() === day && today.getMonth() === currentDate.getMonth() && today.getFullYear() === currentDate.getFullYear();
                   
                   return (
                     <div 
                       key={i} 
                       className={cn(
-                        "aspect-square flex items-center justify-center rounded-xl text-sm font-bold transition-all relative group",
-                        isSun ? "bg-red-500/10 text-red-500 cursor-not-allowed" : "bg-white/5 text-white/60",
+                        "aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-bold transition-all relative group",
+                        (isSun || isHoliday) ? "bg-red-500/10 text-red-500 cursor-not-allowed" : "bg-white/5 text-white/60",
                         isToday && "bg-brand-accent text-white shadow-[0_0_20px_rgba(242,125,38,0.4)] scale-110 z-10"
                       )}
                     >
-                      {day}
-                      {isSun && (
-                        <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="bg-red-500 text-[8px] text-white px-1 rounded-sm uppercase">Off</div>
+                      <span>{day}</span>
+                      {(isSun || isHoliday) && (
+                        <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity z-30">
+                          <div className="bg-red-500 text-[8px] text-white px-1.5 py-0.5 rounded-sm uppercase whitespace-nowrap shadow-lg">
+                            {holidayName || 'Fechado'}
+                          </div>
                         </div>
                       )}
                       {isToday && (
@@ -573,6 +734,30 @@ export default function App() {
                   );
                 })}
               </div>
+
+              {hasBridgeHoliday() && (
+                <div className="mt-8 p-4 glass border-brand-accent/20 rounded-2xl animate-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-brand-accent/20 rounded-full flex items-center justify-center">
+                      <Phone className="text-brand-accent" size={14} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Aviso de Feriado</p>
+                      <p className="text-xs text-white/80">
+                        Possibilidade de enforcamento. <span className="font-bold">Em caso de urgência nos chame aqui:</span>
+                      </p>
+                      <a 
+                        href="https://wa.me/5521969645513" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-brand-accent font-bold text-sm hover:underline flex items-center gap-1 mt-1"
+                      >
+                        <MessageSquare size={14} /> 21 96964-5513
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Background Decoration */}
               <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-brand-accent/5 blur-[100px] rounded-full pointer-events-none"></div>
@@ -610,9 +795,19 @@ export default function App() {
                 DO <span className="text-brand-accent italic">BÁSICO</span> AO <br />
                 <span className="text-brand-accent italic">ACABAMENTO</span>
               </h2>
-              <p className="text-white/60 text-lg mb-12 leading-relaxed">
+              <p className="text-white/60 text-lg mb-8 leading-relaxed">
                 Somos uma empresa familiar que entende a importância do seu sonho. Na Ednaldo materiais de construção, você não é apenas um cliente, é um parceiro. Oferecemos consultoria técnica gratuita para garantir que você leve exatamente o que sua obra precisa.
               </p>
+              
+              <div className="mb-12 p-6 glass rounded-2xl border-brand-accent/20">
+                <div className="flex items-center gap-3 mb-4">
+                  <HardHat className="text-brand-accent" />
+                  <h4 className="font-bold uppercase tracking-widest text-sm">Obras de Referência</h4>
+                </div>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  Orgulhamo-nos de ter fornecido materiais para grandes projetos locais, como as obras do <span className="text-white font-bold">Hospital de Referência Andaraí e proximidades</span>, diversas <span className="text-white font-bold">creches, colégios e igrejas</span> nos arredores. Nossa qualidade está presente em cada canto do bairro.
+                </p>
+              </div>
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="flex flex-col gap-3">
@@ -718,7 +913,7 @@ export default function App() {
               </span>
             </div>
             <p className="text-white/40 max-w-sm mb-8">
-              Sua parceira de confiança no Andaraí. Do básico ao acabamento, oferecemos o melhor para sua obra.
+              Sua parceira de confiança no Andaraí e proximidades. Do básico ao acabamento, oferecemos o melhor para sua obra.
             </p>
             <div className="flex gap-4">
               <div className="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-brand-accent transition-colors cursor-pointer">
@@ -738,7 +933,7 @@ export default function App() {
             <ul className="flex flex-col gap-4 text-white/40 text-sm">
               <li className="flex gap-3">
                 <MapPin className="text-brand-accent shrink-0" size={18} />
-                R. Leopoldo, 106 - Andaraí, Rio de Janeiro - RJ, 20541-170
+                R. Leopoldo, 106 - Andaraí e proximidades, Rio de Janeiro - RJ, 20541-170
               </li>
               <li className="flex gap-3">
                 <Clock className="text-brand-accent shrink-0" size={18} />
